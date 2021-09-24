@@ -27,9 +27,11 @@ object Main extends IOApp {
         val homePageViewWrite = views.homepage.Write.useEachTime2(viewSessionResource)
         val homePageViewRead = views.homepage.Read.useEachTime2(viewSessionResource)
         val userCredentialsViewRead = views.usercredentials.Read.useEachTime2(viewSessionResource)
+        val userCredentialsViewWrite = views.usercredentials.Write.useEachTime2(viewSessionResource)
 
         val logViewings = aggregators.homepage.HomePage.logViewings[F](messageDb)
         val homePageAggregator = aggregators.homepage.HomePage.aggregator[F](messageDb, homePageViewWrite)
+        val userCredentialsAggregator = aggregators.usercredentials.UserCredentials.aggregator[F](messageDb, userCredentialsViewWrite)
 
         val helloRoutes = application.hello.Routes[F]()
         val viewingRoutes = application.viewing.Routes[F](eventRepositoryResource)
@@ -43,6 +45,7 @@ object Main extends IOApp {
           HttpServer.stream[F](httpApp),
           logViewings,
           homePageAggregator,
+          userCredentialsAggregator,
           identityComponent,
         ).parJoinUnbounded.as(ExitCode.Success)
       }

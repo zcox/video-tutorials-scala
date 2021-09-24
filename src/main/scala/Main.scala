@@ -21,6 +21,8 @@ object Main extends IOApp {
         val messageDb = MessageDb.useEachTime(messageDbResource)
         val eventRepositoryResource = messageDbResource.map(application.viewing.EventRepository(_))
 
+        val identityComponent = vt.components.identity.Identity.component[F](messageDb)
+
         val migrate = Stream.eval(Flyway.migrate("localhost", 5433, "postgres", "postgres", "postgres")).drain
         val homePageViewWrite = views.homepage.Write.useEachTime2(viewSessionResource)
         val homePageViewRead = views.homepage.Read.useEachTime2(viewSessionResource)
@@ -40,7 +42,8 @@ object Main extends IOApp {
         migrate ++ Stream(
           HttpServer.stream[F](httpApp),
           logViewings,
-          homePageAggregator
+          homePageAggregator,
+          identityComponent,
         ).parJoinUnbounded.as(ExitCode.Success)
       }
     }

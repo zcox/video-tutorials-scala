@@ -28,6 +28,7 @@ libraryDependencies ++= Seq(
   // "org.tpolecat" %% "natchez-http4s" % "0.1.3",
   "org.typelevel" %% "log4cats-slf4j" % "2.1.1",
   "ch.qos.logback" % "logback-classic" % "1.2.5",
+  "com.github.t3hnar" %% "scala-bcrypt" % "4.3.0",
   "org.scalameta" %% "munit" % V.munit % Test,
   "org.typelevel" %% "munit-cats-effect-3" % V.munitCatsEffect3 % Test,
 )

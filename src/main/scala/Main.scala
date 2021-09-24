@@ -24,15 +24,17 @@ object Main extends IOApp {
         val migrate = Stream.eval(Flyway.migrate("localhost", 5433, "postgres", "postgres", "postgres")).drain
         val homePageViewWrite = views.homepage.Write.useEachTime2(viewSessionResource)
         val homePageViewRead = views.homepage.Read.useEachTime2(viewSessionResource)
+        val userCredentialsViewRead = views.usercredentials.Read.useEachTime2(viewSessionResource)
 
         val logViewings = aggregators.homepage.HomePage.logViewings[F](messageDb)
         val homePageAggregator = aggregators.homepage.HomePage.aggregator[F](messageDb, homePageViewWrite)
 
-        val helloRoutes = vt.application.hello.Routes[F]()
+        val helloRoutes = application.hello.Routes[F]()
         val viewingRoutes = application.viewing.Routes[F](eventRepositoryResource)
         val homePageRoutes = application.homepage.Routes[F](homePageViewRead)
+        val registerRoutes = application.register.Routes[F](messageDb, userCredentialsViewRead)
         val authMiddleware = AuthMiddleware(DumbAuth.impl[F])
-        val routes = helloRoutes <+> authMiddleware(viewingRoutes <+> homePageRoutes)
+        val routes = helloRoutes <+> registerRoutes <+> authMiddleware(viewingRoutes <+> homePageRoutes)
         val httpApp = routes.orNotFound
 
         migrate ++ Stream(

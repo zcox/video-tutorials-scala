@@ -20,13 +20,6 @@ object UserCredentials {
     object Data {
       implicit val decoder: Decoder[Data] = deriveDecoder[Data]
     }
-    // case class Metadata(
-    //   userId: UUID,
-    //   traceId: UUID,
-    // )
-    // object Metadata {
-    //   implicit val encoder: Encoder[Metadata] = deriveEncoder[Metadata]
-    // }
   }
 
   def aggregator[F[_]: Temporal](mdb: MessageDb[F], view: vt.views.usercredentials.Write[F]): Stream[F, Unit] = 

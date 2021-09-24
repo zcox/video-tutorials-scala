@@ -11,14 +11,14 @@ object HomePage {
   def logViewings[F[_]: Temporal: Console](mdb: MessageDb[F]): Stream[F, Unit] =
     mdb.subscribe(
       "viewing", 
-      "logViewings", 
+      "aggregators:log-viewings", 
       Console[F].println(_),
     )
 
   def aggregator[F[_]: Temporal](mdb: MessageDb[F], view: vt.views.homepage.Write[F]): Stream[F, Unit] = 
     mdb.subscribe(
       "viewing",
-      "home-page-aggregator",
+      "aggregators:home-page",
       handle[F](view),
     )
 

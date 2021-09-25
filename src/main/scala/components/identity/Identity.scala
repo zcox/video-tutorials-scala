@@ -53,16 +53,56 @@ object Identity {
     }
   }
 
+  object UserLoginFailed {
+    case class Data(
+      userId: UUID,
+      reason: String,
+    )
+    object Data {
+      implicit val decoder: Decoder[Data] = deriveDecoder[Data]
+    }
+    case class Metadata(
+      traceId: UUID,
+    )
+    object Metadata {
+      implicit val decoder: Decoder[Metadata] = deriveDecoder[Metadata]
+    }
+  }
+
+  object AccountLocked {
+    case class Data(
+      userId: UUID,
+      reason: String,
+    )
+    object Data {
+      implicit val encoder: Encoder[Data] = deriveEncoder[Data]
+    }
+    case class Metadata(
+      traceId: UUID,
+    )
+    object Metadata {
+      implicit val encoder: Encoder[Metadata] = deriveEncoder[Metadata]
+    }
+  }
+
   case object AlreadyRegisteredError extends Exception with NoStackTrace
 
-  def component[F[_]: Async](mdb: MessageDb[F]): Stream[F, Unit] =
-    mdb.subscribe(
+  def component[F[_]: Async](mdb: MessageDb[F]): Stream[F, Unit] = {
+    val identityCommands = mdb.subscribe(
       "identity:command",
       "components:identity:command",
-      handle[F](mdb),
+      handleIdentityCommand[F](mdb),
     )
+    //lock account on too many login failures. this could be a separate component, if multiple components can write events to same category stream (i.e. identity)
+    val authenticationEvents = mdb.subscribe(
+      "authentication",
+      "components:identity:authentication",
+      handleAuthenticationEvent[F](mdb),
+    )
+    identityCommands.merge(authenticationEvents)
+  }
 
-  def handle[F[_]: Sync](mdb: MessageDb[F])(command: MessageDb.Read.Message): F[Unit] = 
+  def handleIdentityCommand[F[_]: Sync](mdb: MessageDb[F])(command: MessageDb.Read.Message): F[Unit] = 
     command.`type` match {
       case "Register" => 
         (for {
@@ -91,5 +131,36 @@ object Identity {
         }
       case _ => Applicative[F].unit
     }
+
+  def handleAuthenticationEvent[F[_]: Sync](mdb: MessageDb[F])(event: MessageDb.Read.Message): F[Unit] = 
+    event.`type` match {
+      case "UserLoginFailed" => 
+        for {
+          userLoginFailedData <- event.decodeData[UserLoginFailed.Data].liftTo[F]
+          userLoginFailedMetadata <- event.decodeMetadata[UserLoginFailed.Metadata].liftTo[F]
+          // if userLoginFailedData.reason == "Incorrect password"
+          userId = userLoginFailedData.userId
+          streamName = s"authentication-$userId"
+          //TODO this would need to be more sophisticated in real life, this is just proof-of-concept
+          () <- mdb
+            .getStreamMessages(streamName, 0L.some, Long.MaxValue.some, none)
+            .collect { case e if e.`type` == "UserLoginFailed" /*and reason is "Incorrect password" and within 1h and after unlocked....*/ => 1 }
+            .compile
+            .fold(0)(_ + _)
+            .map(_ > 3)
+            .ifM(writeAccountLockedEvent(mdb, userId, userLoginFailedMetadata.traceId), Applicative[F].unit)
+        } yield ()
+      case _ => Applicative[F].unit
+    }
+
+  def writeAccountLockedEvent[F[_]: Functor](mdb: MessageDb[F], userId: UUID, traceId: UUID): F[Unit] =
+    mdb.writeMessage(
+      UUID.randomUUID().toString,
+      s"identity-$userId",
+      "AccountLocked",
+      AccountLocked.Data(userId, "Too many login failures").asJson,
+      AccountLocked.Metadata(traceId).asJson.some,
+      none,
+    ).void
 
 }

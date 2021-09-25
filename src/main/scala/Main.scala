@@ -37,8 +37,13 @@ object Main extends IOApp {
         val viewingRoutes = application.viewing.Routes[F](eventRepositoryResource)
         val homePageRoutes = application.homepage.Routes[F](homePageViewRead)
         val registerRoutes = application.register.Routes[F](messageDb, userCredentialsViewRead)
+        val authenticateRoutes = application.authenticate.Routes[F](messageDb, userCredentialsViewRead)
         val authMiddleware = AuthMiddleware(DumbAuth.impl[F])
-        val routes = helloRoutes <+> registerRoutes <+> authMiddleware(viewingRoutes <+> homePageRoutes)
+        val routes = 
+          helloRoutes <+> 
+          registerRoutes <+> 
+          authenticateRoutes <+>
+          authMiddleware(viewingRoutes <+> homePageRoutes)
         val httpApp = routes.orNotFound
 
         migrate ++ Stream(

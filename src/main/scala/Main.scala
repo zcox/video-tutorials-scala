@@ -22,6 +22,7 @@ object Main extends IOApp {
         val eventRepositoryResource = messageDbResource.map(application.viewing.EventRepository(_))
 
         val identityComponent = vt.components.identity.Identity.component[F](messageDb)
+        val emailComponent = vt.components.email.Email.component[F](messageDb)
 
         val migrate = Stream.eval(Flyway.migrate("localhost", 5433, "postgres", "postgres", "postgres")).drain
         val homePageViewWrite = views.homepage.Write.useEachTime2(viewSessionResource)
@@ -52,6 +53,7 @@ object Main extends IOApp {
           homePageAggregator,
           userCredentialsAggregator,
           identityComponent,
+          emailComponent,
         ).parJoinUnbounded.as(ExitCode.Success)
       }
     }

@@ -17,7 +17,7 @@ object Routes {
 
   def validatePassword[F[_]](password: String, passwordHash: String)(implicit F: cats.ApplicativeError[F, Throwable]): F[Boolean] = {
     import com.github.t3hnar.bcrypt._
-    val b = password.isBcryptedSafeBounded(passwordHash).liftTo[F]
+    password.isBcryptedSafeBounded(passwordHash).liftTo[F]
   }
 
   def writeLoggedInEvent[F[_]: Applicative](mdb: MessageDb[F], userId: UUID, traceId: UUID): F[Unit] = 

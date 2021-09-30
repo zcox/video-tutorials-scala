@@ -8,11 +8,12 @@ addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.0" cross CrossVersi
 lazy val V = new {
   val flyway = "8.0.0-beta2"
   val http4s = "0.23.1"
-  val skunk = "0.2.2"
+  val kafka4s = "4.0.0-M5"
   val messagedb4s = "0.1.0-SNAPSHOT"
   val munit = "0.7.27"
   val munitCatsEffect3 = "1.0.0"
   val postgres = "42.2.14"
+  val skunk = "0.2.2"
 }
 
 libraryDependencies ++= Seq(
@@ -29,6 +30,9 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "log4cats-slf4j" % "2.1.1",
   "ch.qos.logback" % "logback-classic" % "1.2.5",
   "com.github.t3hnar" %% "scala-bcrypt" % "4.3.0",
+  "com.banno" %% "kafka4s" % V.kafka4s,
   "org.scalameta" %% "munit" % V.munit % Test,
   "org.typelevel" %% "munit-cats-effect-3" % V.munitCatsEffect3 % Test,
 )
+
+Compile / sourceGenerators += (Compile / avroScalaGenerate).taskValue,

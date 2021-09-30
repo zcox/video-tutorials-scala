@@ -21,6 +21,13 @@ object Main extends IOApp {
         val messageDb = MessageDb.useEachTime(messageDbResource)
         val eventRepositoryResource = messageDbResource.map(application.viewing.EventRepository(_))
 
+        val kafka = Kafka.fromDebeziumTopic[F]("localhost:9092", "http://localhost:8081")
+        val logViewings2 = kafka.subscribe(
+          "viewing", 
+          "aggregators:log-viewings-2", 
+          x => Console[F].println(s"logViewings2: $x"),
+        )
+
         val identityComponent = vt.components.identity.Identity.component[F](messageDb)
         val emailComponent = vt.components.email.Email.component[F](messageDb)
 
@@ -50,6 +57,7 @@ object Main extends IOApp {
         migrate ++ Stream(
           HttpServer.stream[F](httpApp),
           logViewings,
+          logViewings2,
           homePageAggregator,
           userCredentialsAggregator,
           identityComponent,

@@ -1,0 +1,13 @@
+{
+    "type": "record",
+    "name": "Key",
+    "namespace": "message_db.message_store.messages",
+    "fields":
+    [
+        {
+            "name": "global_position",
+            "type": "long"
+        }
+    ],
+    "connect.name": "message_db.message_store.messages.Key"
+}

@@ -12,11 +12,12 @@ object Database {
     Session.pooled(
       host = "localhost",
       port = 5432,
-      user = "message_store",
+      user = "postgres",
       database = "message_store",
-      password = Some("message_store"),
+      password = Some("postgres"),
       //no idea how many sessions to use...
       max = 4,
+      parameters = Map("search_path" -> "message_store") ++ Session.DefaultConnectionParameters,
     )
 
   def viewSessionResource[F[_]: Concurrent: Network: Console]: Resource[F, Resource[F, Session[F]]] =

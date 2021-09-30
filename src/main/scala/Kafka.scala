@@ -79,7 +79,7 @@ object Kafka {
       globalPosition = v.global_position,
       data = v.data.getOrElse(throw new NullPointerException("TODO")),
       metadata = v.metadata,
-      //TODO something about this is incorrect
+      //TODO something about this time calculation is incorrect. apparently topic has microseconds
       time = LocalDateTime.ofInstant(Instant.ofEpochMilli(v.time / 1000L), ZoneOffset.UTC),
     )
 

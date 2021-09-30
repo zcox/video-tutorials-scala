@@ -85,6 +85,28 @@ object Identity {
     }
   }
 
+  object Send {
+    case class Data(
+      emailId: UUID,
+      from: String,
+      to: String,
+      subject: String,
+      text: String,
+      html: String,
+    )
+    object Data {
+      implicit val encoder: Encoder[Data] = deriveEncoder[Data]
+    }
+    case class Metadata(
+      originStreamName: String,
+      traceId: UUID,
+      userId: UUID,
+    )
+    object Metadata {
+      implicit val encoder: Encoder[Metadata] = deriveEncoder[Metadata]
+    }
+  }
+
   case object AlreadyRegisteredError extends Exception with NoStackTrace
 
   def component[F[_]: Async](mdb: MessageDb[F]): Stream[F, Unit] = {
@@ -93,13 +115,21 @@ object Identity {
       "components:identity:command",
       handleIdentityCommand[F](mdb),
     )
+    // val identityEvents = mdb.subscribe(
+    //   "identity",
+    //   "components:identity",
+    //   e => e.`type` match {
+    //     case "Registered" => handleRegistered[F](mdb, e)
+    //     case _ => Applicative[F].unit
+    //   }
+    // )
     //lock account on too many login failures. this could be a separate component, if multiple components can write events to same category stream (i.e. identity)
     val authenticationEvents = mdb.subscribe(
       "authentication",
       "components:identity:authentication",
       handleAuthenticationEvent[F](mdb),
     )
-    identityCommands.merge(authenticationEvents)
+    identityCommands/*.merge(identityEvents)*/.merge(authenticationEvents)
   }
 
   def handleIdentityCommand[F[_]: Sync](mdb: MessageDb[F])(command: MessageDb.Read.Message): F[Unit] = 
@@ -131,6 +161,39 @@ object Identity {
         }
       case _ => Applicative[F].unit
     }
+
+  // def handleRegistered[F[_]](mdb: MessageDb[F], event: MessageDb.Read.Message): F[Unit] = 
+  //   for {
+  //     registeredData <- event.decodeData[Registered.Data].liftTo[F]
+  //     registeredMetadata <- event.decodeMetadata[Registered.Metadata].liftTo[F]
+  //     maybeSent <- mdb
+  //       .getAllStreamMessages(s"identity-${registeredData.userId}")
+  //       .find(_.`type` == "RegistrationEmailSent")
+  //       .compile
+  //       .last
+  //     () <- maybeSent.fold{
+  //       val emailId = UUID.nameUUIDFromBytes(identity.email.getBytes("UTF-8"))
+  //       mdb.writeMessage(
+  //         id = UUID.randomUUID().toString,
+  //         streamName = s"sendEmail:command-$emailId",
+  //         `type` = "Send",
+  //         data = Send.Data(
+  //           emailId = emailId,
+  //           from = "todo@site.com",
+  //           to = identity.email,
+  //           subject = "Welcome",
+  //           text = "You registered!",
+  //           html = "<p>You registered!</p>",
+  //         ).asJson,
+  //         metadata = Send.Metadata(
+  //           originStreamName = sendMetadata.originStreamName,
+  //           traceId = sendMetadata.traceId,
+  //           userId = sendMetadata.userId,
+  //         ).asJson.some,
+  //         expectedVersion = none,
+  //       ).void
+  //     }(_ => Applicative[F].unit)
+  //   } yield ()
 
   def handleAuthenticationEvent[F[_]: Sync](mdb: MessageDb[F])(event: MessageDb.Read.Message): F[Unit] = 
     event.`type` match {

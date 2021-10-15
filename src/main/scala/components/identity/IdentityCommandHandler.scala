@@ -13,7 +13,7 @@ object IdentityCommandHandler {
       case "Register" => 
         for {
           data <- command.decodeData[Register.Data].liftTo[F]
-          metadata <- command.decodeData[Register.Metadata].liftTo[F]
+          metadata <- command.decodeMetadata[Register.Metadata].liftTo[F]
           () <- RegisterCommandHandler.handle(mdb, Register(data.userId, data.email, data.passwordHash, metadata.traceId))
         } yield ()
       case _ => Applicative[F].unit

@@ -28,8 +28,10 @@ object Main extends IOApp {
           x => Console[F].println(s"logViewings2: $x"),
         )
 
+        val emailSender = vt.components.email.EmailSender.fake[F]()
+
         val identityComponent = vt.components.identity.Identity.component[F](messageDb)
-        val emailComponent = vt.components.email.Email.component[F](messageDb)
+        val emailComponent = vt.components.email.EmailComponent.component[F](messageDb, emailSender)
 
         val migrate = Stream.eval(Flyway.migrate("localhost", 5433, "postgres", "postgres", "postgres")).drain
         val homePageViewWrite = views.homepage.Write.useEachTime2(viewSessionResource)

@@ -32,5 +32,11 @@ curl -s -H 'X-User-Id: 5FAEC8C9-9A92-47C9-A838-250BD6C665E0' localhost:8080/home
 Register a new user:
 
 ```sh
-curl -X POST -d '{"userId":"C7DDB894-A9EC-4E27-BFCA-5A8ABCDB2E83","email":"user@site.com","password":"asdf1234"}' localhost:8080/register
+curl -v -X POST -d '{"userId":"C7DDB894-A9EC-4E27-BFCA-5A8ABCDB2E83","email":"user@site.com","password":"asdf1234"}' localhost:8080/register
+```
+
+Authenticate a user:
+
+```sh
+curl -v -X POST -d '{"email":"user@site.com","password":"asdf1234"}' localhost:8080/log-in
 ```

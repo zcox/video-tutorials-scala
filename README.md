@@ -20,7 +20,7 @@ Connect to Confluent Control Center at http://localhost:9021.
 Record a viewing:
 
 ```sh
- curl -v -X POST -H 'X-User-Id: 5FAEC8C9-9A92-47C9-A838-250BD6C665E0' localhost:8080/videos/E86DE3C2-B8CD-449D-BBDC-58C194BD8FA0/viewings
+curl -v -X POST -H 'X-User-Id: 5FAEC8C9-9A92-47C9-A838-250BD6C665E0' localhost:8080/videos/E86DE3C2-B8CD-449D-BBDC-58C194BD8FA0/viewings
 ```
 
 Get the home page data:

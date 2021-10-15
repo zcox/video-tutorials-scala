@@ -123,6 +123,39 @@ object AccountLocked {
   }
 }
 
+case class Send(
+  emailId: UUID,
+  from: String,
+  to: String,
+  subject: String,
+  text: String,
+  html: String,
+  originStreamName: String,
+  traceId: UUID,
+  userId: UUID,
+) {
+  def toMessage: MessageDb.Write.Message =
+    MessageDb.Write.Message(
+      id = UUID.randomUUID().toString,
+      streamName = s"sendEmail:command-$emailId",
+      `type` = "Send",
+      data = Send.Data(
+        emailId = emailId,
+        from = from,
+        to = to,
+        subject = subject,
+        text = text,
+        html = html,
+      ).asJson,
+      metadata = Send.Metadata(
+        originStreamName = originStreamName,
+        traceId = traceId,
+        userId = userId,
+      ).asJson.some,
+      expectedVersion = none,
+    )
+}
+
 object Send {
   case class Data(
     emailId: UUID,

@@ -9,6 +9,12 @@ import org.typelevel.log4cats.Logger
 
 object RegisteredEventHandler {
 
+  // def sendRegisteredEmail(event: Registered, alreadySent: Option[RegistrationEmailSent]): Option[Send] =
+  //   alreadySent match {
+  //     case None => Send().some
+  //     case Some(_) => none
+  //   }
+
   def handle[F[_]/*: Temporal*/: Logger](mdb: MessageDb[F], event: Registered): F[Unit] = {
     //shut up compiler
     val _ = (mdb, event)
